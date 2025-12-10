@@ -1,0 +1,83 @@
+/* CSS Grid Layout for Surfing Page */
+
+/* Apply Grid to Body (or you could wrap content in a main container) */
+body {
+    margin: 0;
+    padding: 5px;
+    display: grid;
+    /* Two equal columns for the bottom section */
+    grid-template-columns: 1fr 1fr;
+    /* Rows: Header, Viz, Bottom Content */
+    grid-template-rows: auto auto 1fr;
+    gap: 15px;
+    /* Space between grid items */
+    box-sizing: border-box;
+    /* Background set in HTML, but ensuring full height compatibility */
+    min-height: 100vh;
+}
+
+.uppermenu {
+    /* Span across both columns */
+    grid-column: 1 / -1;
+    grid-row: 1;
+
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    color: rgb(248, 240, 230);
+    background-color: rgb(112, 88, 88);
+    height: 100px;
+
+    /* Flex layout for inner menu items */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;
+    /* Add slight padding for content breathing room */
+}
+
+/* Tableau Viz Container */
+.tableau {
+    /* Span across both columns */
+    grid-column: 1 / -1;
+    grid-row: 2;
+
+    font-family: 'Times New Roman', Times, serif;
+    color: rgb(200, 240, 255);
+    background-color: rgb(112, 88, 88);
+
+    /* Height accommodates the 927px viz + padding */
+    min-height: 930px;
+    /* overflow: hidden;  Not needed as grid cells grow, but good for safety */
+}
+
+/* Bottom Left: YouTube Video */
+.leftytvid {
+    grid-column: 1 / 2;
+    grid-row: 3;
+
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    color: rgb(200, 240, 255);
+    background-color: rgb(112, 88, 88);
+
+    /* Ensure it has height for the video iframe (100% of this container) */
+    min-height: 400px;
+    position: relative;
+}
+
+/* Bottom Right: Former Brand Bio */
+.rightformerbio {
+    grid-column: 2 / 3;
+    grid-row: 3;
+
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: rgb(200, 240, 255);
+    background-color: rgb(112, 88, 88);
+
+    padding: 15px;
+    /* Add padding for text readability */
+    line-height: 1.2;
+}
+
+.header-logo {
+    width: 150px;
+    height: auto;
+}

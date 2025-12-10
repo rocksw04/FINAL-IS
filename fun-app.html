@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Rock's Climbing Race</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg-main: #f2faf5;
+      --bg-deep: #cfe5d6;
+      --primary: #2f6544;
+      --primary-soft: #6b9b7e;
+      --accent: #a8d0b8;
+      --text-main: #143324;
+      --text-muted: #4c6757;
+      --radius-xl: 20px;
+      --radius-pill: 999px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at top, #e7f4ec 0, var(--bg-main) 45%, #c6decf 100%);
+      color: var(--text-main);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .game-wrapper {
+      width: min(960px, 100% - 2.5rem);
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(210, 233, 219, 0.95));
+      border-radius: 26px;
+      box-shadow: 0 18px 45px rgba(11, 36, 20, 0.28);
+      border: 1px solid rgba(148, 191, 163, 0.7);
+      padding: 1.8rem 1.8rem 1.6rem;
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.4rem;
+      gap: 1rem;
+    }
+
+    .title-block h1 {
+      font-size: 1.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+    }
+
+    .title-block p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .hint {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      text-align: right;
+    }
+
+    .hint span {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 5px;
+      background: #e2f1e7;
+      border: 1px solid #b6d6c0;
+      margin: 0 2px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .game-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(0, 2.1fr);
+      gap: 1.6rem;
+      align-items: stretch;
+    }
+
+    /* Climbing wall */
+    .wall {
+      position: relative;
+      height: 440px;
+      background: linear-gradient(to bottom, #e2f1e7 0, #c1dcc9 100%);
+      border-radius: 22px;
+      overflow: hidden;
+      border: 1px solid rgba(135, 177, 150, 0.9);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+    }
+
+    .wall::before,
+    .wall::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: 0.35;
+      background-image:
+        radial-gradient(circle at 10% 20%, #d9efe1 0, transparent 55%),
+        radial-gradient(circle at 90% 70%, #d4ebde 0, transparent 55%);
+      pointer-events: none;
+    }
+
+    .finish-line {
+      position: absolute;
+      top: 12px;
+      left: 10px;
+      right: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: repeating-linear-gradient(90deg,
+          #ffffff,
+          #ffffff 10px,
+          #98c6a7 10px,
+          #98c6a7 20px);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+      z-index: 3;
+    }
+
+    .finish-label {
+      position: absolute;
+      top: 24px;
+      right: 18px;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--primary);
+      z-index: 3;
+    }
+
+    .track {
+      position: absolute;
+      top: 24px;
+      bottom: 24px;
+      width: 48%;
+      border-radius: 18px;
+      border: 1px dashed rgba(108, 150, 125, 0.7);
+      overflow: hidden;
+      padding: 12px 8px;
+    }
+
+    .track--player {
+      left: 10px;
+      background: linear-gradient(to right, rgba(217, 238, 225, 0.9), rgba(199, 225, 208, 0.9));
+    }
+
+    .track--cpu {
+      right: 10px;
+      background: linear-gradient(to right, rgba(207, 228, 216, 0.9), rgba(188, 214, 200, 0.9));
+    }
+
+    .holds {
+      position: absolute;
+      inset: 0;
+      opacity: 0.8;
+      pointer-events: none;
+    }
+
+    .hold {
+      position: absolute;
+      width: 24px;
+      height: 14px;
+      border-radius: 999px;
+      background: rgba(130, 173, 145, 0.9);
+      box-shadow: 0 2px 3px rgba(7, 35, 18, 0.3);
+    }
+
+    .hold--light {
+      background: rgba(191, 216, 200, 0.95);
+    }
+
+    .climber {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 38px;
+      height: 60px;
+      border-radius: 18px;
+      background: linear-gradient(145deg, #ffffff, #d3e7d9);
+      box-shadow: 0 10px 20px rgba(6, 30, 16, 0.4);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding-top: 6px;
+      transition: bottom 0.09s ease-out;
+      z-index: 2;
+    }
+
+    .climber-head {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #f6dcc0;
+      box-shadow: 0 0 0 2px rgba(102, 149, 119, 0.7);
+      margin-bottom: 3px;
+    }
+
+    .climber-body {
+      width: 20px;
+      height: 18px;
+      border-radius: 10px;
+      background: #5d8e6e;
+    }
+
+    .climber-label {
+      position: absolute;
+      bottom: 6px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(20, 51, 36, 0.9);
+      color: #f3fff7;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .climber--player .climber-body {
+      background: #4c8765;
+    }
+
+    .climber--cpu .climber-body {
+      background: #8aa894;
+    }
+
+    /* HUD */
+    .side-panel {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 1.1rem;
+    }
+
+    .status-card,
+    .tips-card {
+      background: rgba(232, 244, 237, 0.95);
+      border-radius: var(--radius-xl);
+      padding: 1rem 1.1rem;
+      border: 1px solid rgba(162, 201, 175, 0.8);
+      box-shadow: 0 6px 18px rgba(11, 36, 20, 0.16);
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .status-title {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--primary);
+      margin-bottom: 0.35rem;
+    }
+
+    #statusMessage {
+      font-size: 0.95rem;
+      color: var(--text-main);
+      margin-bottom: 0.4rem;
+    }
+
+    .progress-bars {
+      margin-top: 0.35rem;
+    }
+
+    .progress-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .bar {
+      flex: 1;
+      height: 8px;
+      border-radius: 999px;
+      background: #d6e9de;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--primary), var(--primary-soft));
+      transition: width 0.09s ease-out;
+    }
+
+    .bar-fill--cpu {
+      background: linear-gradient(90deg, #6e8f77, #9bb8a4);
+    }
+
+    .label-pill {
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      background: rgba(205, 226, 212, 0.9);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--primary);
+    }
+
+    .controls-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 0.7rem;
+      gap: 0.7rem;
+    }
+
+    .btn {
+      border-radius: var(--radius-pill);
+      padding: 0.6rem 1.2rem;
+      border: 1px solid rgba(126, 176, 145, 0.9);
+      background: linear-gradient(135deg, #f7fff9, #d7ebde);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-weight: 600;
+      color: var(--primary);
+      cursor: pointer;
+      box-shadow: 0 8px 18px rgba(11, 36, 20, 0.15);
+      transition: transform 0.1s ease-out, box-shadow 0.1s ease-out, background 0.1s ease-out;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 22px rgba(11, 36, 20, 0.22);
+      background: linear-gradient(135deg, #f9fffb, #cfe6d9);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+      box-shadow: 0 6px 14px rgba(11, 36, 20, 0.18);
+    }
+
+    .tips-card ul {
+      padding-left: 1.1rem;
+      margin-top: 0.3rem;
+      font-size: 0.86rem;
+    }
+
+    .tips-card li {
+      margin-bottom: 0.3rem;
+    }
+
+    .back-link {
+      margin-top: 0.7rem;
+      font-size: 0.8rem;
+      text-align: right;
+    }
+
+    .back-link a {
+      color: var(--primary-soft);
+      text-decoration: none;
+    }
+
+    .back-link a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 820px) {
+      .game-layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .wall {
+        height: 390px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .game-wrapper {
+        padding: 1.3rem 1.1rem 1.2rem;
+      }
+
+      .top-bar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .hint {
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="game-wrapper">
+    <div style="display: flex; gap: 15px; margin-bottom: 20px; font-size: 0.9em; font-weight: bold;">
+      <a href="index.html" style="color: var(--primary); text-decoration: none;">&larr; Resume</a>
+      <a href="surfinghobby.html" style="color: var(--primary); text-decoration: none;">Surfing &rarr;</a>
+    </div>
+    <div class="top-bar">
+      <div class="title-block">
+        <h1>Rock's Climb Race</h1>
+        <p>Use your arrow keys to out-climb the computer up a realistic wall of holds.</p>
+      </div>
+      <div class="hint">
+        Controls:
+        <span>↑</span> climb &nbsp;•&nbsp; <span>R</span> restart
+      </div>
+    </div>
+
+    <div class="game-layout">
+      <!-- Climbing wall -->
+      <div class="wall" id="wall">
+        <div class="finish-line"></div>
+        <div class="finish-label">Summit</div>
+
+        <!-- Player track -->
+        <div class="track track--player">
+          <div class="holds" aria-hidden="true">
+            <div class="hold" style="left: 16%; top: 10%;"></div>
+            <div class="hold hold--light" style="left: 60%; top: 17%;"></div>
+            <div class="hold" style="left: 35%; top: 26%;"></div>
+            <div class="hold hold--light" style="left: 72%; top: 34%;"></div>
+            <div class="hold" style="left: 20%; top: 43%;"></div>
+            <div class="hold hold--light" style="left: 55%; top: 53%;"></div>
+            <div class="hold" style="left: 30%; top: 64%;"></div>
+            <div class="hold hold--light" style="left: 70%; top: 74%;"></div>
+            <div class="hold" style="left: 40%; top: 84%;"></div>
+          </div>
+
+          <div class="climber climber--player" id="playerClimber">
+            <div class="climber-head"></div>
+            <div class="climber-body"></div>
+            <div class="climber-label">You</div>
+          </div>
+        </div>
+
+        <!-- CPU track -->
+        <div class="track track--cpu">
+          <div class="holds" aria-hidden="true">
+            <div class="hold hold--light" style="left: 30%; top: 12%;"></div>
+            <div class="hold" style="left: 72%; top: 20%;"></div>
+            <div class="hold hold--light" style="left: 40%; top: 30%;"></div>
+            <div class="hold" style="left: 18%; top: 39%;"></div>
+            <div class="hold hold--light" style="left: 63%; top: 48%;"></div>
+            <div class="hold" style="left: 35%; top: 59%;"></div>
+            <div class="hold hold--light" style="left: 75%; top: 69%;"></div>
+            <div class="hold" style="left: 28%; top: 80%;"></div>
+          </div>
+
+          <div class="climber climber--cpu" id="cpuClimber">
+            <div class="climber-head"></div>
+            <div class="climber-body"></div>
+            <div class="climber-label">Computer</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Side panel HUD -->
+      <div class="side-panel">
+        <div class="status-card">
+          <div class="status-title">Race status</div>
+          <div id="statusMessage">Press the <strong>↑ arrow</strong> to start climbing.</div>
+
+          <div class="progress-bars">
+            <div class="progress-row">
+              <span class="label-pill">You</span>
+              <div class="bar">
+                <div class="bar-fill" id="playerBar"></div>
+              </div>
+              <span id="playerPct">0%</span>
+            </div>
+            <div class="progress-row">
+              <span class="label-pill">Computer</span>
+              <div class="bar">
+                <div class="bar-fill bar-fill--cpu" id="cpuBar"></div>
+              </div>
+              <span id="cpuPct">0%</span>
+            </div>
+          </div>
+
+          <div class="controls-row">
+            <button class="btn" id="restartBtn">Restart Race</button>
+            <div style="font-size: 0.78rem; color: var(--text-muted);">
+              Tip: quick, rhythmic taps on ↑ feel like real moves.
+            </div>
+          </div>
+        </div>
+
+        <div class="tips-card">
+          <div class="status-title">Climbing strategy</div>
+          <ul>
+            <li>Stay smooth &amp; consistent with your key presses – little bursts beat frantic mashing.</li>
+            <li>The computer climbs at a realistic, slightly variable pace. Some runs will be closer than others.</li>
+            <li>Watch the progress bars to feel how far you are from the “summit” finish line.</li>
+          </ul>
+          <div class="back-link">
+            <a href="index.html">&larr; Back to main site</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const wall = document.getElementById("wall");
+    const playerClimber = document.getElementById("playerClimber");
+    const cpuClimber = document.getElementById("cpuClimber");
+    const statusMessage = document.getElementById("statusMessage");
+    const restartBtn = document.getElementById("restartBtn");
+    const playerBar = document.getElementById("playerBar");
+    const cpuBar = document.getElementById("cpuBar");
+    const playerPctLabel = document.getElementById("playerPct");
+    const cpuPctLabel = document.getElementById("cpuPct");
+
+    let playerProgress = 0; // 0–100
+    let cpuProgress = 0;    // 0–100
+    let gameStarted = false;
+    let gameOver = false;
+    let cpuTimer = null;
+
+    // Helper: map progress to bottom position on wall
+    function updatePositions() {
+      const trackHeight = wall.clientHeight - 70; // 70 ~ climber height + bottom padding
+      const playerBottom = (playerProgress / 100) * trackHeight + 12; // +12 to keep above bottom
+      const cpuBottom = (cpuProgress / 100) * trackHeight + 12;
+
+      playerClimber.style.bottom = playerBottom + "px";
+      cpuClimber.style.bottom = cpuBottom + "px";
+
+      playerBar.style.width = playerProgress + "%";
+      cpuBar.style.width = cpuProgress + "%";
+      playerPctLabel.textContent = Math.round(playerProgress) + "%";
+      cpuPctLabel.textContent = Math.round(cpuProgress) + "%";
+    }
+
+    function clampProgress() {
+      if (playerProgress > 100) playerProgress = 100;
+      if (cpuProgress > 100) cpuProgress = 100;
+    }
+
+    function checkForWinner() {
+      if (gameOver) return;
+
+      if (playerProgress >= 100 && cpuProgress >= 100) {
+        gameOver = true;
+        statusMessage.textContent = "Photo finish! You and the computer topped out together.";
+      } else if (playerProgress >= 100) {
+        gameOver = true;
+        statusMessage.textContent = "Nice send! You reached the top before the computer.";
+      } else if (cpuProgress >= 100) {
+        gameOver = true;
+        statusMessage.textContent = "The computer topped out first this time. Reset and try again!";
+      }
+
+      if (gameOver && cpuTimer) {
+        clearInterval(cpuTimer);
+        cpuTimer = null;
+      }
+    }
+
+    function startCpuClimbing() {
+      if (cpuTimer) return;
+
+      // Computer climbs with realistic variability
+      cpuTimer = setInterval(() => {
+        if (gameOver) return;
+
+        // Base speed + small randomness
+        const baseStep = 1.2; // percent per tick
+        const randomBonus = Math.random() * 0.9; // 0–0.9
+        cpuProgress += baseStep + randomBonus;
+
+        clampProgress();
+        updatePositions();
+        checkForWinner();
+      }, 160); // every 160ms
+    }
+
+    function handleKeyDown(e) {
+      const key = e.key;
+
+      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(key)) {
+        // Prevent page from scrolling on arrow keys
+        e.preventDefault();
+      }
+
+      if (key === "ArrowUp") {
+        if (!gameStarted) {
+          gameStarted = true;
+          statusMessage.textContent = "You’re on the wall! Keep tapping ↑ to pull ahead.";
+          startCpuClimbing();
+        }
+
+        if (!gameOver) {
+          // Slightly variable step so tap rhythm feels organic
+          const step = 2.4 + Math.random() * 0.8; // 2.4–3.2%
+          playerProgress += step;
+
+          clampProgress();
+          updatePositions();
+          checkForWinner();
+        }
+      }
+
+      // Allow R key to restart quickly
+      if (key === "r" || key === "R") {
+        resetGame();
+      }
+    }
+
+    function resetGame() {
+      if (cpuTimer) {
+        clearInterval(cpuTimer);
+        cpuTimer = null;
+      }
+      playerProgress = 0;
+      cpuProgress = 0;
+      gameStarted = false;
+      gameOver = false;
+      statusMessage.innerHTML = "Press the <strong>↑ arrow</strong> to start climbing.";
+      updatePositions();
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    restartBtn.addEventListener("click", resetGame);
+
+    // Initialize positions when page loads
+    window.addEventListener("load", () => {
+      updatePositions();
+    });
+  </script>
+</body>
+
+</html>
